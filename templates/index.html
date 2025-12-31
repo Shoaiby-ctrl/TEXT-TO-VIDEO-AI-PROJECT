@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>🎬 AI Movie Maker Pro</title>
+    <style>
+        body { background: #0f0f0f; color: #e0e0e0; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 100vh; margin: 0; }
+        
+        .studio { background: #1a1a1a; padding: 40px; border-radius: 20px; width: 90%; max-width: 650px; text-align: center; border: 1px solid #333; box-shadow: 0 10px 30px rgba(0,0,0,0.5); }
+        
+        h1 { color: #E50914; margin-top: 0; font-weight: 800; letter-spacing: 1px; }
+        p { color: #aaa; margin-bottom: 30px; }
+        
+        .input-group { position: relative; width: 90%; margin: auto; }
+        input { width: 100%; padding: 15px 20px; border-radius: 30px; border: 2px solid #333; font-size: 16px; background: #2a2a2a; color: white; outline: none; transition: 0.3s; box-sizing: border-box; }
+        input:focus { border-color: #E50914; }
+        
+        button#btn { background: #E50914; color: white; border: none; padding: 15px 40px; font-size: 18px; font-weight: bold; border-radius: 30px; cursor: pointer; transition: 0.3s; margin-top: 20px; box-shadow: 0 5px 15px rgba(229, 9, 20, 0.3); }
+        button#btn:hover { background: #ff0f1f; transform: translateY(-2px); }
+        button:disabled { background: #555; cursor: not-allowed; transform: none; box-shadow: none; }
+        
+        .status { margin-top: 25px; color: #888; font-size: 15px; min-height: 20px; }
+        
+        /* Video Container Styles */
+        .video-container { margin-top: 30px; display: none; position: relative; background: #000; border-radius: 15px; padding: 5px; border: 2px solid #333; animation: fadeIn 0.5s ease; }
+        video { width: 100%; border-radius: 10px; display: block; }
+        
+        .script-box { background: #222; padding: 15px; border-radius: 10px; margin-top: 10px; color: #ccc; font-style: italic; line-height: 1.5; text-align: left; border-left: 4px solid #E50914; }
+        
+        /* Close Button Styles */
+        .close-btn { position: absolute; top: -15px; right: -15px; background: #E50914; color: white; border: none; width: 35px; height: 35px; border-radius: 50%; font-size: 20px; font-weight: bold; cursor: pointer; box-shadow: 0 2px 10px rgba(0,0,0,0.3); transition: 0.2s; display: flex; align-items: center; justify-content: center; padding: 0; line-height: 1; z-index: 10; }
+        .close-btn:hover { background: #ff0f1f; transform: scale(1.1); }
+
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+    </style>
+</head>
+<body>
+
+    <div class="studio">
+        <h1>🎬 AI Movie Maker Pro</h1>
+        <p>Type a scene. We'll generate the script, high-res visuals, voice, and render it.</p>
+        
+        <div class="input-group">
+            <input type="text" id="prompt" placeholder="e.g. A detailed close-up of an old sea captain smiling during a storm">
+        </div>
+        <button onclick="makeMovie()" id="btn">Generate Video 🎬</button>
+
+        <div class="status" id="status"></div>
+
+        <div class="video-container" id="result">
+            <button class="close-btn" onclick="closeVideo()">×</button>
+            
+            <video id="videoPlayer" controls loop></video>
+            <div class="script-box" id="scriptDisplay"></div>
+        </div>
+    </div>
+
+    <script>
+        async function makeMovie() {
+            const prompt = document.getElementById('prompt').value;
+            const btn = document.getElementById('btn');
+            const status = document.getElementById('status');
+            const result = document.getElementById('result');
+            
+            if(!prompt) return alert("Please enter a prompt first!");
+
+            btn.disabled = true;
+            status.innerHTML = "⏳ Starting Pipeline...<br>Writing Script & Designing Images...";
+            result.style.display = 'none';
+
+            const formData = new FormData();
+            formData.append('prompt', prompt);
+
+            try {
+                // Simulating progress updates for better UX
+                setTimeout(() => { if(btn.disabled) status.innerHTML = "🎨 Generating 1024px High-Res Images (this takes time)..."; }, 2500);
+                setTimeout(() => { if(btn.disabled) status.innerHTML = "🎙️ Recording Narrator Voiceover..."; }, 8000);
+                setTimeout(() => { if(btn.disabled) status.innerHTML = "🎞️ Rendering Final MP4 Video..."; }, 12000);
+
+                const response = await fetch('/generate_video',
+                {
+                     method: 'POST', body: formData 
+                });
+                const data = await response.json();
+
+                if (data.success) {
+                    status.innerHTML = "✅ <b>Render Complete!</b> Enjoy your movie.";
+                    const video = document.getElementById('videoPlayer');
+                    // Adding timestamp to force browser to load the new video, not cache
+                    video.src = data.video_url + "?t=" + new Date().getTime(); 
+                    
+                    document.getElementById('scriptDisplay').innerText = `"${data.script}"`;
+                    result.style.display = 'block';
+                    video.play();
+                } else {
+                    status.innerHTML = "❌ <b>Generation Failed:</b> " + data.error;
+                }
+
+            } catch (err) {
+                status.innerHTML = "❌ <b>Connection Error.</b> Please check server.";
+                console.error(err);
+            }
+
+            btn.disabled = false;
+        }
+
+        // Function to close/hide the video result
+        function closeVideo() {
+            document.getElementById('result').style.display = 'none';
+            document.getElementById('status').innerHTML = "";
+            document.getElementById('prompt').value = "";
+            document.getElementById('videoPlayer').pause();
+            document.getElementById('videoPlayer').src = "";
+        }
+    </script>
+</body>
+</html>
